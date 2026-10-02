@@ -1,7 +1,7 @@
 import { getSignatures, getEvents, DEFAULT_RPC } from './rpc.js';
 import { PriceBook } from './prices.js';
 import { buildLedger, fyOf, IN_KINDS, OUT_KINDS } from './ledger.js';
-import { loadTokens, symbol } from './tokens.js';
+import { loadTokens, symbol, addTokens } from './tokens.js';
 import { loadWallet, saveWallet, clearAll } from './cache.js';
 import { scheduleVdaCsv, auditCsv, download, istDate } from './export.js';
 
@@ -31,7 +31,7 @@ const store = {
   },
 };
 
-const state = { address: '', events: [], prices: null, overrides: {}, ledger: null, demo: false };
+const state = { address: '', events: [], prices: null, overrides: {}, ledger: null, demo: false, demoOverrides: {} };
 
 function currentFy() {
   return fyOf(Date.now() / 1000);
@@ -101,7 +101,7 @@ async function fetchHistory(address) {
 async function analyse(address, events) {
   state.address = address;
   state.events = events;
-  state.overrides = store.get(`overrides:${address}`, {});
+  state.overrides = state.demo ? { ...state.demoOverrides } : store.get(`overrides:${address}`, {});
   progress(0.88, 'Fetching historical prices…');
   state.prices = new PriceBook();
   await state.prices.prepare(events, (d, t) => progress(0.88 + 0.08 * (d / t), `Fetching historical prices ${d}/${t}…`));
@@ -121,7 +121,7 @@ function render() {
   state.ledger = L;
   const s = L.summary;
   $('r-title').textContent = `FY ${fy} report`;
-  $('r-sub').textContent = `${state.demo ? 'Demo wallet' : 'Wallet'} ${short(state.address)} · ${L.rows.length} Schedule VDA row${L.rows.length === 1 ? '' : 's'}`;
+  $('r-sub').textContent = `${state.demo ? 'Sample portfolio: illustrative trades valued at real historical prices' : `Wallet ${short(state.address)}`} · ${L.rows.length} Schedule VDA row${L.rows.length === 1 ? '' : 's'}`;
 
   $('tiles').innerHTML = [
     ['Tax payable on VDA', fmtInr(s.totalTax), '30% + 4% cess on gains', 'hero-tile'],
@@ -142,13 +142,18 @@ function render() {
   renderIncome(L);
 }
 
+function txLink(sig, text, cls = '') {
+  if (state.demo) return `<span class="${cls}">${text}</span>`;
+  return `<a class="${cls}" href="https://solscan.io/tx/${sig}" target="_blank" rel="noopener">${text}</a>`;
+}
+
 function reviewRow(r) {
   const kinds = r.type === 'in' ? IN_KINDS : OUT_KINDS;
   const legs = r.legs.map((l, i) => `${fmtQty(l.qty)} ${esc(symbol(l.mint))}${r.values[i] != null ? ` <span class="muted">(${fmtInr(r.values[i])})</span>` : ''}`).join(', ');
   const opts = Object.entries(kinds).map(([k, label]) => `<option value="${k}"${k === r.kind ? ' selected' : ''}>${esc(label)}</option>`).join('');
   return `<div class="review-item">
     <div><span class="dir ${r.type}">${r.type === 'in' ? '↓ Received' : '↑ Sent'}</span><div class="tx">${istDate(r.time)}</div></div>
-    <div>${legs} <a class="tx" href="https://solscan.io/tx/${r.signature}" target="_blank" rel="noopener">${short(r.signature)}</a></div>
+    <div>${legs} ${txLink(r.signature, short(r.signature), 'tx')}</div>
     <select data-sig="${r.signature}" aria-label="Treatment">${opts}</select>
   </div>`;
 }
@@ -172,7 +177,7 @@ function renderVda(L) {
     <td>${esc(symbol(r.mint))}${r.flags.map((f) => `<span class="chip">${flagLabel[f] || f}</span>`).join('')}</td>
     <td class="n">${fmtQty(r.qty)}</td>
     <td>${r.acquired == null ? '<span class="muted">unknown</span>' : istDate(r.acquired)}</td>
-    <td><a href="https://solscan.io/tx/${r.signature}" target="_blank" rel="noopener">${istDate(r.transferred)}</a></td>
+    <td>${txLink(r.signature, istDate(r.transferred))}</td>
     <td class="n">${fmtInr(r.cost)}</td>
     <td class="n">${fmtInr(r.consideration)}</td>
     <td class="n ${r.income > 0 ? 'pos' : r.income < 0 ? 'neg' : ''}">${fmtInr(r.income)}</td>
@@ -208,8 +213,9 @@ async function runDemo() {
     progress(0.1, 'Loading demo wallet…');
     const demo = await (await fetch('demo/events.json')).json();
     state.demo = true;
-    $('address').value = demo.address;
-    $('fy').value = demo.fy;
+    state.demoOverrides = demo.overrides || {};
+    addTokens(demo.tokens || {});
+    $('address').value = '';
     await analyse(demo.address, demo.events);
     if ([...$('fy').options].some((o) => o.value === demo.fy)) $('fy').value = demo.fy;
     render();

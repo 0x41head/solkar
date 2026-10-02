@@ -37,5 +37,10 @@ export async function loadTokens(mints) {
   save(cache);
 }
 
+/** Registers known metadata (e.g. sample tokens) without a network lookup. */
+export function addTokens(map) {
+  Object.assign(cache, map);
+}
+
 export const symbol = (mint) => cache[mint]?.symbol || `${mint.slice(0, 4)}…`;
 export const tokenName = (mint) => cache[mint]?.name || mint;
