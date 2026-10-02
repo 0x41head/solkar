@@ -8,9 +8,9 @@
 
 ## Why
 
-India taxes every crypto transfer, including crypto-to-crypto swaps, at a flat 30%. Losses can't offset gains, and each transfer has to be reported in Schedule VDA with its acquisition date, cost and sale value in INR. Indian exchanges hand users a tax statement. DeFi users on Solana get nothing: they have hundreds of Jupiter swaps and a blank form. Global crypto-tax tools are paid, built around other countries' rules first, and process your history on their servers.
+India taxes every crypto transfer, including crypto-to-crypto swaps, at a flat 30%. Losses can't offset gains, and each transfer has to be reported in Schedule VDA with its acquisition date, cost and sale value in INR. Indian exchanges hand users a tax statement. Self-custody Solana users have to rebuild it from hundreds of swaps, or import their history into a closed-source, account-based tax platform such as KoinX.
 
-SolKar is free, open source, India-specific, and runs locally.
+SolKar is the self-custody alternative: free, open source, no account, and computed locally in your browser.
 
 ## How it works
 
