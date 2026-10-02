@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SolKar · Solana crypto tax for India</title>
+<meta name="description" content="Turn a Solana wallet into an ITR Schedule VDA report: 30% tax under Section 115BBH, FIFO cost basis in INR, runs entirely in your browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-inner">
+    <a class="brand" href="./"><span class="mark" aria-hidden="true">₹</span>SolKar</a>
+    <nav><a href="#how">How it works</a><a href="https://github.com/0x41head/solkar" rel="noopener">GitHub</a></nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <p class="eyebrow">For Indian taxpayers · ITR Schedule VDA</p>
+    <h1>Your Solana wallet, turned into a crypto tax report.</h1>
+    <p class="lede">Paste a wallet address. SolKar reads its on-chain history, values every trade in rupees, matches your oldest coins first (FIFO) and fills in the Schedule VDA rows for your return. Everything runs in your browser. Your wallet data never leaves your device.</p>
+
+    <form id="form" class="card form" autocomplete="off">
+      <div class="field grow">
+        <label for="address">Solana wallet address</label>
+        <input id="address" name="address" placeholder="e.g. 7xKX…" spellcheck="false" required>
+      </div>
+      <div class="field">
+        <label for="fy">Financial year</label>
+        <select id="fy" name="fy"></select>
+      </div>
+      <div class="actions">
+        <button type="submit" class="btn primary" id="run">Generate report</button>
+        <button type="button" class="btn ghost" id="demo">Try a demo wallet</button>
+      </div>
+      <details class="advanced">
+        <summary>Advanced: RPC endpoint</summary>
+        <p class="hint">The free public Solana RPC is heavily rate-limited, so large wallets can take minutes. A free <a href="https://dashboard.helius.dev/" rel="noopener">Helius</a> key makes it about 10× faster. The key stays in your browser.</p>
+        <div class="field">
+          <label for="rpc">RPC URL</label>
+          <input id="rpc" placeholder="https://mainnet.helius-rpc.com/?api-key=…" spellcheck="false">
+        </div>
+        <div class="field">
+          <label for="max">Max transactions to scan</label>
+          <input id="max" type="number" min="50" step="50" value="3000">
+        </div>
+        <button type="button" class="btn ghost small" id="clear">Clear cached history</button>
+      </details>
+    </form>
+
+    <div id="progress" class="progress" hidden>
+      <div class="bar"><span id="bar"></span></div>
+      <p id="status" role="status" aria-live="polite"></p>
+    </div>
+    <p id="error" class="error" role="alert" hidden></p>
+  </section>
+
+  <section id="results" hidden>
+    <div class="results-head">
+      <div>
+        <h2 id="r-title">Report</h2>
+        <p class="muted" id="r-sub"></p>
+      </div>
+      <div class="actions">
+        <button class="btn" id="csv">Download Schedule VDA (CSV)</button>
+        <button class="btn ghost" id="audit">Detailed CSV</button>
+        <button class="btn ghost" id="print">Print / PDF</button>
+      </div>
+    </div>
+
+    <div class="tiles" id="tiles"></div>
+    <div id="warnings"></div>
+
+    <section class="card" id="review-card">
+      <div class="card-head">
+        <h3>Review transfers</h3>
+        <p class="muted">SolKar can't tell from the chain alone whether a plain transfer was a purchase, a payment or a move between your own wallets. Check each one. Totals update instantly.</p>
+      </div>
+      <div id="review"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head row">
+        <div>
+          <h3>Schedule VDA</h3>
+          <p class="muted">One row per transfer and acquisition lot, in the order of the ITR form.</p>
+        </div>
+        <div class="field inline">
+          <label for="head">Head of income</label>
+          <select id="head">
+            <option>Capital Gain</option>
+            <option>Business Income</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap"><table id="vda"></table></div>
+      <p class="muted small" id="vda-note"></p>
+    </section>
+
+    <section class="card" id="income-card" hidden>
+      <div class="card-head">
+        <h3>Income received in crypto</h3>
+        <p class="muted">Rewards, airdrops and payments you marked as income. These are taxed when received, under the applicable head, separately from Schedule VDA.</p>
+      </div>
+      <div class="table-wrap"><table id="income"></table></div>
+    </section>
+  </section>
+
+  <section id="how" class="how">
+    <h2>How SolKar computes your tax</h2>
+    <div class="grid">
+      <div><h4>1 · Read the chain</h4><p>Every successful transaction for the wallet is fetched over Solana RPC. SolKar nets out network fees, token-account rent and SOL wrapping, leaving what you actually gave and received.</p></div>
+      <div><h4>2 · Value in rupees</h4><p>Stablecoins are valued at $1, and major tokens at the Binance hourly price. In a crypto-to-crypto trade, the sale value is what you received, so any token can be valued from the other side of the trade. USD is converted at that day's reference rate.</p></div>
+      <div><h4>3 · Apply Section 115BBH</h4><p>Your oldest coins are matched first (FIFO). Only the cost of acquisition is deducted, and fees aren't. Gains are taxed at 30% plus 4% cess. A loss on one transfer can't reduce a gain on another, and can't be carried forward.</p></div>
+      <div><h4>4 · File</h4><p>Download the CSV in Schedule VDA column order. Copy it into ITR-2 or ITR-3, or hand it to your CA together with the detailed CSV, which links every row to its transaction.</p></div>
+    </div>
+    <p class="disclaimer"><strong>Not tax advice.</strong> SolKar is an open-source estimation tool. Check the results, especially transfers, tokens without a price and anything acquired outside this wallet, with a chartered accountant before filing. TDS under Section 194S is generally not deducted on decentralised exchanges, so ask your CA about any obligations.</p>
+  </section>
+</main>
+
+<footer class="wrap foot">
+  <span>SolKar · open source · built on Solana</span>
+  <span class="muted">Prices: Binance public data · FX: ECB reference rates via Frankfurter</span>
+</footer>
+
+<script type="module" src="src/app.js"></script>
+</body>
+</html>
