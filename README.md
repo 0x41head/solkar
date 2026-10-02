@@ -2,7 +2,9 @@
 
 **Crypto tax for Indian Solana users.** Paste a wallet address and get your ITR **Schedule VDA** rows: every transfer valued in rupees, cost basis matched FIFO, and tax computed under Section 115BBH (30% + 4% cess). Runs entirely in your browser, so no wallet data leaves your device.
 
-**Live app:** https://0x41head.github.io/solkar/ · **Demo:** https://0x41head.github.io/solkar/?demo=1
+**Live app:** https://0x41head.github.io/solkar/ · **Sample report:** https://0x41head.github.io/solkar/?demo=1
+
+**Videos:** [Pitch (2 min)](https://0x41head.github.io/solkar/media/solkar-pitch.mp4) · [Demo walkthrough](https://0x41head.github.io/solkar/media/solkar-demo.mp4)
 
 ## Why
 
